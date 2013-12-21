@@ -78,5 +78,5 @@ class LinkManager(object):
         return online, offline
 
     def for_each(self, f):
-        for link_id, link in self.links.iteritems():
+        for link_id, link in self.auth_links.iteritems():
             f(link_id, link)
