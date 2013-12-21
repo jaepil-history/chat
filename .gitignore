@@ -34,3 +34,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Sublime Text 2
+*.sublime-*
+
+# Appspand
+*.log
