@@ -44,8 +44,10 @@ class LinkManager(object):
 
         return True
 
-    def logout(self, user_uid):
-        del self.auth_links[user_uid]
+    def logout(self, user_uid, link):
+        current_link = self.auth_links.get(user_uid, None)
+        if current_link == link:
+            del self.auth_links[user_uid]
 
         return True
 

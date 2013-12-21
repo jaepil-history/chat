@@ -92,8 +92,13 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         logger.access.debug("WebSocket(%d): on closed" % self.link_id)
 
+        link = net.LinkManager.instance().find_one(link_id=self.link_id)
+        if not link:
+            logger.access.debug("WebSocket(%d): link not found" % self.link_id)
+            return
+
         if self.user_uid:
-            net.LinkManager.instance().logout(user_uid=self.user_uid)
+            net.LinkManager.instance().logout(user_uid=self.user_uid, link=link)
         net.LinkManager.instance().remove(link_id=self.link_id)
 
     def user_login(self, link, user_uid, request):
