@@ -151,7 +151,7 @@ class Group_InfoReq(Message):
 
 
 class Group_InfoAns(Message):
-    request = ModelType(Group_InviteReq)
+    request = ModelType(Group_InfoReq)
     members = ListType(ModelType(UserInfo))
     error_code = IntType(required=True)
     error_message = StringType(required=True)
