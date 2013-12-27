@@ -44,7 +44,7 @@ def push(sender_uid, group_uid, target_uids, message_info):
 
 def pull():
     result = []
-    items = SQS_QUEUE_FROM_SNEK.get_messages(num_messages=100, wait_time_seconds=2)
+    items = SQS_QUEUE_FROM_SNEK.get_messages(num_messages=10, wait_time_seconds=2)
     if items:
         for item in items:
             item_body = item.get_body()
