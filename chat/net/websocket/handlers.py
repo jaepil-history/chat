@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import json
 
@@ -176,7 +176,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         try:
             message.controller.clear_all(user_uid=request.user_uid,
-                                         target_uid=request.group_uid,
+                                         recipient_uid=request.group_uid,
                                          is_group=True)
             group_info = group.controller.leave(group_uid=request.group_uid,
                                                 user_uid=request.user_uid)
@@ -270,7 +270,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def message_send(self, link, user_uid, request):
         message_info = message.controller.send(sender_uid=request.sender_uid,
-                                               target_uid=request.target_uid,
+                                               recipient_uid=request.target_uid,
                                                message=request.message,
                                                is_secret=request.is_secret,
                                                is_group=request.is_group)
@@ -299,7 +299,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         try:
             message_info = message.controller.cancel(sender_uid=request.sender_uid,
-                                                     target_uid=request.target_uid,
+                                                     recipient_uid=request.target_uid,
                                                      message_uid=request.message_uid,
                                                      is_group=request.is_group)
             if message_info is None:
@@ -323,7 +323,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         try:
             message_info = message.controller.open_secret_message(
                 sender_uid=request.sender_uid,
-                target_uid=request.target_uid,
+                recipient_uid=request.target_uid,
                 message_uid=request.message_uid,
                 is_group=request.is_group)
             if message_info is None:
@@ -342,7 +342,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def message_read(self, link, user_uid, request):
         message_info = message.controller.read(user_uid=request.user_uid,
-                                               target_uid=request.sender_uid,
+                                               recipient_uid=request.sender_uid,
                                                message_uids=request.message_uids,
                                                is_group=request.is_group)
         if message_info is not None:
@@ -400,7 +400,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         try:
             message.controller.clear_all(user_uid=request.user_uid,
-                                         target_uid=request.target_uid,
+                                         recipient_uid=request.target_uid,
                                          is_group=False)
         except KeyError as e:
             error_code = 100

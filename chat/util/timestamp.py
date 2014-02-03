@@ -5,7 +5,7 @@ import time
 
 
 def get_timestamp(t=None):
-    if t is None:
+    if not t:
         t = int(round(time.time()))
 
     if isinstance(t, datetime):

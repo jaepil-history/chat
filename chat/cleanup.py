@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import sys
 
 import mongoengine
 
-import app.config
+import config.loader
+from common import cache
 from log import logger
 import message.models
 import queue.models
-from util import cache
 
 
 def build_url_handlers():
@@ -75,7 +75,7 @@ def main():
         print "main.py [config]"
         return False
 
-    config = app.config.load_appcfg(sys.argv[1])
+    config = config.loader.load_appcfg(sys.argv[1])
 
     init_database(config=config)
     flush_queue(config=config)

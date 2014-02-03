@@ -1,43 +1,37 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
+
+import httplib
 
 import tornado.escape
 import tornado.gen
 import tornado.web
 
+from common.handlers import BaseHandler
+import session.controller
 import controller
 
 
-class UserHandler(tornado.web.RequestHandler):
+class LoginHandler(BaseHandler):
     @tornado.web.asynchronous
     def get(self):
-        cmd = self.get_argument("cmd", None)
-        if cmd is None:
-            pass
+        access_token = self.get_argument("access_token")
+        user_name = self.get_argument("name")
 
-        if cmd == "login":
-            self.user_login()
-        elif cmd == "logout":
-            self.user_logout()
-        else:
-            pass
+        si = session.controller.find(access_token=access_token,
+                                     extend_token=True)
+        if not si:
+            raise tornado.web.HTTPError(httplib.UNAUTHORIZED, reason="Session is expired")
+
+        user_info = controller.login(user_uid=si.user_uid, user_name=user_name)
+        self.write("{")
+        self.write("\"me\": ")
+        self.write(user_info.to_json())
+        self.write("}")
 
         self.finish()
 
+
+class UnregisterHandler(BaseHandler):
     @tornado.web.asynchronous
-    def post(self):
-        pass
-
-    def user_login(self):
-        user_uid = self.get_argument("user_uid")
-        user_name = self.get_argument("user_name")
-        platform_id = self.get_argument("pid", None)
-        device_token = self.get_argument("device_token", None)
-
-        result = controller.login(user_uid=user_uid,
-                                  user_name=user_name,
-                                  platform_id=platform_id,
-                                  device_token=device_token)
-        self.write("%s" % result.to_json())
-
-    def user_logout(self):
-        pass
+    def get(self):
+        self.finish()

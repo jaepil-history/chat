@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from tornado.ioloop import PeriodicCallback
 
@@ -23,7 +23,7 @@ class LinkManager(object):
 
     @classmethod
     def instance(cls, **kwargs):
-        if cls._instance is None:
+        if not cls._instance:
             cls._instance = cls(**kwargs)
 
         return cls._instance

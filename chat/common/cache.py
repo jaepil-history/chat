@@ -1,7 +1,10 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from redis import ConnectionPool
 from redis import Redis
+
+
+connection_pool = None
 
 
 def init(host="localhost", port=6379, password=None, pool_size=None, db=0, **kwargs):

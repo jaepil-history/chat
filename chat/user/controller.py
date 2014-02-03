@@ -1,17 +1,14 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import datetime
 
-from util import timestamp
-
 import message.controller
-import queue.controller
 import models
 
 
 def create(user_uid, user_name, platform_id=None, device_token=None):
     devices = []
-    if platform_id is not None and device_token is not None:
+    if platform_id and device_token:
         devices.append(models.DeviceInfo(platform_id=platform_id,
                                          device_token=device_token))
 
@@ -33,16 +30,15 @@ def find(user_uids):
     result = models.User.objects(uid__in=user_uids)
 
     users = []
-    if result is not None:
-        for user in result:
-            users.append(user)
+    for user in result:
+        users.append(user)
 
     return users
 
 
 def login(user_uid, user_name):
     user_info = find_one(user_uid=user_uid)
-    if user_info is None:
+    if not user_info:
         user_info = create(user_uid=user_uid, user_name=user_name)
 
     now = datetime.datetime.utcnow()
@@ -59,4 +55,4 @@ def logout(user_uid):
 
 
 def unregister(user_uid):
-    return message.controller.clear_all(user_uid=user_uid, target_uid=0, is_group=False)
+    return message.controller.clear_all(user_uid=user_uid, recipient_uid=0, is_group=False)

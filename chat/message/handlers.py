@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import re
 
@@ -6,97 +6,163 @@ import tornado.escape
 import tornado.gen
 import tornado.web
 
+from common.handlers import BaseHandler
 import controller
 
 
-class MessageHandler(tornado.web.RequestHandler):
+class GetSummaryHandler(BaseHandler):
     @tornado.web.asynchronous
     def get(self):
-        cmd = self.get_argument("cmd", None)
-        if cmd is None:
+        access_token = self.get_argument("access_token")
+        # count = self.get_argument("count", None)
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
             pass
 
-        if cmd == "send":
-            self.message_send()
-        elif cmd == "read":
-            self.message_read()
-        elif cmd == "get":
-            self.message_get()
-        else:
-            pass
+        # TODO: recent 1 message for each group, unread message count
+        controller.get_summary(user_uid=user_info.uid)
 
         self.finish()
 
-    def message_send(self):
-        user_uid = self.get_argument("user_uid")
-        group_uid = self.get_argument("group_uid", None)
-        dest_uid = self.get_argument("dest_uid", None)
-        message = self.get_argument("message")
-        message = tornado.escape.url_unescape(message)
 
-        if group_uid is None and dest_uid is None:
-            # TODO: Bad request
-            raise KeyError("Invalid parameter")
-
-        is_group = False
-        if group_uid is not None:
-            dest_uid = group_uid
-            is_group = True
-
-        message_info = controller.send(sender_uid=user_uid,
-                                       target_uid=dest_uid,
-                                       message=message,
-                                       is_group=is_group)
-
-        self.write("%s" % message_info.to_json())
-
-    def message_read(self):
-        user_uid = self.get_argument("user_uid")
-        group_uid = self.get_argument("group_uid", None)
-        dest_uid = self.get_argument("dest_uid", None)
-        message_uids = self.get_argument("message_uids")
-        parsed_message_uids = re.split(r"\s*[,]\s*", message_uids.strip())
-
-        if group_uid is None and dest_uid is None:
-            # TODO: Bad request
-            raise KeyError("Invalid parameter")
-
-        is_group = False
-        if group_uid is not None:
-            dest_uid = group_uid
-            is_group = True
-
-        message_infos = controller.read(user_uid=user_uid,
-                                        target_uid=dest_uid,
-                                        message_uids=parsed_message_uids,
-                                        is_group=is_group)
-
-        self.write("{\"messages\": [")
-        self.write(", ".join(m.to_json() for m in message_infos))
-        self.write("]}")
-
-    def message_get(self):
-        user_uid = self.get_argument("user_uid")
-        group_uid = self.get_argument("group_uid", None)
-        dest_uid = self.get_argument("dest_uid", None)
+class GetMessagesHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        target_uid = self.get_argument("target_uid", None)
         since_uid = self.get_argument("since_uid", None)
         count = self.get_argument("count", None)
+        message_uids = self.get_argument("message_uids", None)
+        group = self.get_argument("group", False)
 
-        if group_uid is None and dest_uid is None:
-            # TODO: Bad request
-            raise KeyError("Invalid parameter")
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
 
-        is_group = False
-        if group_uid is not None:
-            dest_uid = group_uid
-            is_group = True
-
-        message_infos = controller.get(src_uid=user_uid,
-                                       dest_uid=dest_uid,
-                                       since_uid=since_uid,
-                                       count=count,
-                                       is_group=is_group)
+        parsed_message_uids = None
+        if message_uids:
+            parsed_message_uids = re.split(r"\s*[,]\s*", message_uids.strip())
+        message_infos = controller.get(src_uid=user_info.uid, dest_uid=target_uid,
+                                       since_uid=since_uid, count=count,
+                                       message_uids=parsed_message_uids,
+                                       is_group=group)
 
         self.write("{\"messages\": [")
         self.write(", ".join(m.to_json() for m in message_infos))
         self.write("]}")
+
+        self.finish()
+
+
+class SendMessageHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        recipient_uid = self.get_argument("recipient_uid", None)
+        group_uid = self.get_argument("group_uid", None)
+        message = self.get_argument("message")
+        secret = (int(self.get_argument("secret", 0)) != 0)
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        message_info = controller.send(sender_uid=user_info.uid,
+                                       recipient_uid=recipient_uid,
+                                       group_uid=group_uid,
+                                       message=message, is_secret=secret)
+
+        self.write("{")
+        self.write("\"message\": ")
+        self.write(message_info.to_json())
+        self.write("}")
+
+        self.finish()
+
+
+class ReadMessageHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        message_uids = self.get_argument("message_uids")
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        parsed_message_uids = re.split(r"\s*[,]\s*", message_uids.strip())
+        message_infos = controller.read(user_uid=user_info.uid,
+                                        message_uids=parsed_message_uids)
+
+        self.write("{\"messages\": [")
+        self.write(", ".join(m.to_json() for m in message_infos))
+        self.write("]}")
+
+        self.finish()
+
+
+class OpenMessageHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        message_uid = long(self.get_argument("message_uid"))
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        message_info = controller.open_secret_message(user_uid=user_info.uid,
+                                                      message_uid=message_uid)
+
+        self.write("{")
+        self.write("\"message\": ")
+        self.write(message_info.to_json())
+        self.write("}")
+
+        self.finish()
+
+
+class CancelMessageHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        recipient_uid = self.get_argument("recipient_uid", None)
+        group_uid = self.get_argument("group_uid", None)
+        message_uid = long(self.get_argument("message_uid"))
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        message_info = controller.cancel(sender_uid=user_info.uid,
+                                         recipient_uid=recipient_uid,
+                                         group_uid=group_uid,
+                                         message_uid=message_uid)
+
+        self.write("{")
+        self.write("\"message\": ")
+        self.write(message_info.to_json())
+        self.write("}")
+
+        self.finish()
+
+
+class ClearMessageHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        recipient_uid = self.get_argument("recipient_uid", None)
+        group_uid = self.get_argument("group_uid", None)
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        try:
+            controller.clear_all(user_uid=user_info.uid,
+                                 recipient_uid=recipient_uid, group_uid=group_uid)
+        except:
+            pass
+
+        self.finish()

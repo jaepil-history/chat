@@ -1,19 +1,19 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 # import hashlib
 import datetime
 
-from util import cache
+from common import cache
 from util import idgen
 
-import app.config
+from config.loader import get_appcfg
 import event.controller
 
 import models
 
 
 def _save(group_info):
-    config = app.config.appcfg
+    config = get_appcfg()
 
     if config.database.redis.enabled:
         redis = cache.get_connection()
@@ -27,15 +27,17 @@ def _save(group_info):
 
 
 def _load(group_uid):
-    config = app.config.appcfg
+    config = get_appcfg()
 
     group_info = None
     if config.database.redis.enabled:
         redis = cache.get_connection()
         key = ("group.%s" % group_uid)
         json = redis.get(name=key)
-        if json is not None:
-            group_info = models.Group.from_json(json)
+        if not json:
+            # TODO: raise exception
+            pass
+        group_info = models.Group.from_json(json)
     else:
         group_info = models.Group.objects(uid=group_uid).first()
 
@@ -43,11 +45,9 @@ def _load(group_uid):
 
 
 def create(owner_uid, invitee_uids, title=None):
-    now = datetime.datetime.utcnow()
-    #uid = hashlib.sha1("%s-%d" % (owner_uid, now)).hexdigest()
-    uid = ("%d" % idgen.get_next_id())
-
+    uid = idgen.get_next_id()
     members = [owner_uid] + invitee_uids
+    now = datetime.datetime.utcnow()
     group_info = models.Group(uid=uid,
                               title=title,
                               owner=owner_uid,
@@ -56,11 +56,11 @@ def create(owner_uid, invitee_uids, title=None):
 
     _save(group_info=group_info)
 
-    # event.controller.on_user_invited(group_uid=uid,
-    #                                  user_uid=owner_uid,
-    #                                  invitee_uids=invitee_uids)
-
     return group_info
+
+
+def delete(owner_uid, group_uid):
+    pass
 
 
 def find(group_uid):
@@ -68,16 +68,17 @@ def find(group_uid):
 
 
 def invite(group_uid, user_uid, invitee_uids):
-    if group_uid is None:
-        group_info = create(owner_uid=user_uid, invitee_uids=invitee_uids)
-    else:
-        group_info = find(group_uid=group_uid)
-        if group_info is None:
-            return None
+    if not group_uid:
+        # TODO: raise exception
+        return None
 
-        for uid in invitee_uids:
-            if uid not in group_info.members:
-                group_info.members.append(uid)
+    group_info = find(group_uid=group_uid)
+    if not group_info:
+        return None
+
+    for uid in invitee_uids:
+        if uid not in group_info.members:
+            group_info.members.append(uid)
 
     _save(group_info=group_info)
 
@@ -88,26 +89,17 @@ def invite(group_uid, user_uid, invitee_uids):
     return group_info
 
 
-def join(group_uid, user_uid, invitee_uids):
-    # group_info = find(group_uid=group_uid)
-    # if group_info is None:
-    #     return None
-    #
-    # if user_uid not in group_info.members:
-    #     return None
-
+def join(group_uid, user_uid):
     if not group_uid:
-        group_info = create(owner_uid=user_uid, invitee_uids=invitee_uids)
-    else:
-        group_info = find(group_uid=group_uid)
-        if group_info is None:
-            return None
+        # TODO: raise exception
+        return None
 
-        if user_uid not in group_info.members:
-            group_info.members.append(user_uid)
-        # for uid in invitee_uids:
-        #     if uid not in group_info.members:
-        #         group_info.members.append(uid)
+    group_info = find(group_uid=group_uid)
+    if not group_info:
+        return None
+
+    if user_uid not in group_info.members:
+        group_info.members.append(user_uid)
 
     _save(group_info=group_info)
 
@@ -119,7 +111,8 @@ def join(group_uid, user_uid, invitee_uids):
 
 def leave(group_uid, user_uid):
     group_info = find(group_uid=group_uid)
-    if group_info is None:
+    if not group_info:
+        # TODO: raise exception
         return None
 
     if user_uid not in group_info.members:

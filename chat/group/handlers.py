@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import re
 
@@ -6,57 +6,140 @@ import tornado.escape
 import tornado.gen
 import tornado.web
 
+from common.handlers import BaseHandler
+import message.controller
 import controller
 
 
-class GroupHandler(tornado.web.RequestHandler):
+class CreateGroupHandler(BaseHandler):
     @tornado.web.asynchronous
     def get(self):
-        cmd = self.get_argument("cmd", None)
-        if cmd is None:
+        access_token = self.get_argument("access_token")
+        invitee_uids = self.get_argument("invitee_uids")
+        title = self.get_argument("title", None)
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
             pass
 
-        if cmd == "invite":
-            self.group_invite()
-        elif cmd == "join":
-            self.group_join()
-        elif cmd == "leave":
-            self.group_leave()
-        else:
-            pass
+        parsed_invitee_uids = []
+        if invitee_uids:
+            parsed_invitee_uids = re.split(r"\s*[,]\s*", invitee_uids.strip())
+
+        group_info = controller.create(owner_uid=user_info.uid,
+                                       invitee_uids=parsed_invitee_uids,
+                                       title=title)
+
+        self.write("{")
+        self.write("\"group\": ")
+        self.write(group_info.to_json())
+        self.write("}")
 
         self.finish()
 
-    def group_invite(self):
-        group_uid = self.get_argument("group_uid")
-        user_uid = self.get_argument("user_uid")
-        invitees = self.get_argument("invitees")
 
-        parsed_invitees = re.split(r"\s*[,]\s*", invitees.strip())
+class DeleteGroupHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        group_uid = long(self.get_argument("group_uid"))
 
-        invited_users = controller.invite(group_uid=group_uid,
-                                          user_uid=user_uid,
-                                          invitee_uids=parsed_invitees)
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
 
-        self.write("%s" % invited_users.to_json())
+        group_info = controller.delete(group_uid=group_uid, owner_uid=user_info.uid)
 
-    def group_join(self):
-        group_uid = self.get_argument("group_uid", None)
-        user_uid = self.get_argument("user_uid")
-        invitees = self.get_argument("invitees", None)
+        self.write("{")
+        self.write("\"group\": ")
+        self.write(group_info.to_json())
+        self.write("}")
 
-        parsed_invitees = []
-        if invitees is not None:
-            parsed_invitees = re.split(r"\s*[,]\s*", invitees.strip())
+        self.finish()
 
-        result = controller.join(group_uid=group_uid,
-                                 user_uid=user_uid,
-                                 invitee_uids=parsed_invitees)
-        self.write("%s" % result.to_json())
 
-    def group_leave(self):
-        group_uid = self.get_argument("group_uid")
-        user_uid = self.get_argument("user_uid")
+class ListGroupHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
 
-        result = controller.leave(group_uid=group_uid, user_uid=user_uid)
-        self.write("%s" % result.to_json())
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        group_infos = []
+
+        self.write("{\"groups\": [")
+        self.write(", ".join(g.to_json() for g in group_infos))
+        self.write("]}")
+
+        self.finish()
+
+
+class InviteUserHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        group_uid = long(self.get_argument("group_uid"))
+        invitee_uids = self.get_argument("invitee_uids")
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        parsed_invitee_uids = []
+        if invitee_uids:
+            parsed_invitee_uids = re.split(r"\s*[,]\s*", invitee_uids.strip())
+
+        group_info = controller.invite(group_uid=group_uid, user_uid=user_info.uid,
+                                       invitee_uids=parsed_invitee_uids)
+
+        self.write("{")
+        self.write("\"group\": ")
+        self.write(group_info.to_json())
+        self.write("}")
+
+        self.finish()
+
+
+class JoinGroupHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        group_uid = long(self.get_argument("group_uid"))
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        group_info = controller.join(group_uid=group_uid, user_uid=user_info.uid)
+
+        self.write("{")
+        self.write("\"group\": ")
+        self.write(group_info.to_json())
+        self.write("}")
+
+        self.finish()
+
+
+class LeaveGroupHandler(BaseHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        access_token = self.get_argument("access_token")
+        group_uid = long(self.get_argument("group_uid"))
+
+        user_info = self.get_user_info(access_token=access_token)
+        if not user_info:
+            pass
+
+        message.controller.clear_all(user_uid=user_info.uid,
+                                     recipient_uid=group_uid,
+                                     is_group=True)
+        group_info = controller.leave(group_uid=group_uid, user_uid=user_info.uid)
+
+        self.write("{")
+        self.write("\"group\": ")
+        self.write(group_info.to_json())
+        self.write("}")
+
+        self.finish()

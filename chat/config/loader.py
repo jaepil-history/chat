@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import json
 import yaml
@@ -90,7 +90,6 @@ class AppConfig(Document):
     interop = EmbeddedDocumentField(Interop)
 
 
-options = None
 appcfg = None
 
 
@@ -99,3 +98,11 @@ def load_appcfg(filename):
     opt = yaml.load(file(filename))
     appcfg = AppConfig.from_json(json.dumps(opt))
     return appcfg
+
+
+def get_appcfg():
+    return appcfg
+
+
+def is_production_stage():
+    return appcfg.application.stage == "production"

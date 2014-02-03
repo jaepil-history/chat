@@ -1,12 +1,9 @@
-# Copyright (c) 2013 Appspand, Inc.
-
-import json
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from boto import sqs
 from boto.sqs import jsonmessage
 
 from log import logger
-import message.controller
 from util import timestamp
 
 
@@ -22,7 +19,40 @@ SQS_QUEUE_TO_SNEK = SQS.get_queue(SQS_QUEUE_TO_SNEK)
 SQS_QUEUE_FROM_SNEK = SQS.get_queue(SQS_QUEUE_FROM_SNEK)
 
 
-def push(sender_uid, group_uid, target_uids, message_info):
+def push(sender_uid, group_uid, target_uids, message_info, queue_info):
+    if not group_uid:
+        group_uid = 0
+
+    messages = []
+    for user_uid in target_uids:
+        badge_count = queue_info.get(user_uid, 0)
+        body = {
+            "sender_uid": sender_uid,
+            "group_uid": group_uid,
+            "target_uids": [user_uid],
+            "badge_count": badge_count,
+            "message_info": {
+                "message_uid": message_info.uid,
+                "sender_uid": message_info.sender_uid,
+                "group_uid": message_info.group_uid,
+                "message": message_info.message,
+                "countdown": message_info.countdown,
+                "issued_at": timestamp.get_timestamp(message_info.issued_at),
+                "expires_at": timestamp.get_timestamp(message_info.expires_at)
+            }
+        }
+        messages.append(jsonmessage.JSONMessage(body=body))
+
+    for message in messages:
+        SQS_QUEUE_TO_SNEK.write(message)
+
+    logger.access.debug("pushed to snek: %r" % messages)
+
+
+def push_old(sender_uid, group_uid, target_uids, message_info):
+    if not group_uid:
+        group_uid = 0
+
     push_body = {
         "sender_uid": sender_uid,
         "group_uid": group_uid,

@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from mongoengine import Document
 from mongoengine import EmbeddedDocument
@@ -17,7 +17,7 @@ from mongoengine import whitelist
 class Message(Document):
     uid = LongField(required=True)
     sender_uid = StringField(required=True, max_length=512)
-    group_uid = StringField(max_length=512)
+    group_uid = LongField(default=0)
     message = StringField(required=True, max_length=10240)
     countdown = IntField(required=True)
     issued_at = DateTimeField(required=True)

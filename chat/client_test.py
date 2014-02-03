@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import json
 import sys
@@ -85,7 +85,7 @@ def run_websocket(url, user_uid, user_name):
 
     while True:
         msg = yield connection.read_message()
-        if msg is None:
+        if not msg:
             sys.exit(1)
         print msg
 
@@ -128,7 +128,7 @@ def group_invite(group_uid, user_uid, invitee_uids):
 
 
 def group_join(group_uid, user_uid):
-    if group_uid is not None:
+    if group_uid:
         request_url = "%s/group?cmd=join&group_uid=%s&user_uid=%s"\
                        % (base_api_url, group_uid, user_uid)
     else:

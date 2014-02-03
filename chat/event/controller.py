@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from log import logger
 from net.link_manager import LinkManager
@@ -23,7 +23,7 @@ def _send_message(sender_uid, target_uids, data):
     return online, offline
 
 
-def on_message_send(sender_uid, group_uid, target_uids, message_info):
+def on_message_send(sender_uid, group_uid, target_uids, message_info, queue_info):
     mi = net.protocols.MessageInfo()
     mi.from_mongo_engine(message_info)
 
@@ -34,12 +34,11 @@ def on_message_send(sender_uid, group_uid, target_uids, message_info):
     online_users, offline_users = _send_message(sender_uid=sender_uid,
                                                 target_uids=target_uids, data=noti_str)
     if offline_users:
-        if group_uid is None:
-            group_uid = 0
         interop.controller.push(sender_uid=sender_uid,
                                 group_uid=group_uid,
                                 target_uids=offline_users,
-                                message_info=message_info)
+                                message_info=message_info,
+                                queue_info=queue_info)
 
 
 def on_message_cancel(sender_uid, group_uid, target_uids, message_info):
@@ -102,7 +101,7 @@ def on_input_stopped(group_uid, user_uid):
 
 def on_user_invited(group_uid, user_uid, invitee_uids):
     user_info = user.controller.find(user_uids=invitee_uids)
-    if user_info is None:
+    if not user_info:
         raise KeyError("Unknown user ID")
 
     member_info = user.controller.find(user_uids=invitee_uids)
@@ -139,7 +138,7 @@ def on_user_joined(user_uid, group_uid):
 
 def on_user_leaved(user_uid, group_uid, target_uids):
     user_info = user.controller.find_one(user_uid=user_uid)
-    if user_info is None:
+    if not user_info:
         raise KeyError("Unknown user ID")
 
     noti = net.protocols.Group_LeaveNoti()

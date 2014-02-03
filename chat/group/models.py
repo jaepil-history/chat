@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from mongoengine import Document
 from mongoengine import EmbeddedDocument
@@ -14,7 +14,7 @@ from mongoengine import whitelist
 
 
 class Group(Document):
-    uid = StringField(required=True, max_length=512)
+    uid = LongField(required=True)
     title = StringField(max_length=512)
     owner = StringField(required=True, max_length=512)
     members = ListField(StringField(max_length=512), required=True)

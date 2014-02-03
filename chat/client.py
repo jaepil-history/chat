@@ -1,103 +1,20 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import json
 import sys
-import socket
 
-from tornado import gen
 from tornado import httpclient
-from tornado import ioloop
-from tornado import websocket
-from tornado import httputil
-from tornado import iostream
-from settings import base
-
-import net.protocols
 
 
-#config = base.parse_options()
-
-base_host = "chat.appengine.local.appspand.com:8080"
-# base_host = "chat.appengine.appspand.com:8080"
-websocket_url = "ws://" + base_host + "/v1/ws"
-base_api_url = "http://" + base_host + "/v1"
+SERVER_BASE_URL = "http://localhost:8400/v1"
 
 
-class WebSocketClient(object):
-    def __init__(self):
-        super(WebSocketClient, self).__init__()
+def do_auth(argv):
+    user_uid = argv[0]
 
-    @gen.coroutine
-    def connect(self, url):
-        print "connect 1"
-        self.connection = yield websocket.websocket_connect(url=url, connect_timeout=0.01)
-        print "connect 2"
-
-    @gen.coroutine
-    def login(self, user_uid, user_name):
-        print "login 1"
-        login_req = net.protocols.User_LoginReq()
-        login_req.user_uid = user_uid
-        login_req.user_name = user_name
-        login_req.seq = 1
-        req = net.protocols.to_json(user_uid=user_uid, message=login_req)
-        self.connection.write_message(req)
-
-        res = yield self.connection.read_message()
-        login_ans = net.protocols.User_LoginAns(json.loads(res))
-        print login_ans.serialize()
-
-        print "login 2"
-
-
-@gen.coroutine
-def run_websocket(url, user_uid, user_name):
-    print "websocket:", url
-    connection = yield websocket.websocket_connect(url=url)
-
-    login_req = net.protocols.User_LoginReq()
-    login_req.user_uid = user_uid
-    login_req.user_name = user_name
-
-    req = net.protocols.to_json(user_uid=user_uid, message=login_req)
-    print req
-
-    connection.write_message(req)
-
-    while True:
-        msg = yield connection.read_message()
-        if msg is None:
-            sys.exit(1)
-        print msg
-
-
-def run_tcpsocket(user_uid, user_name):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-    stream = iostream.IOStream(client)
-    stream.connect(("chat.appengine.local.appspand.com", 20001))
-
-    login_req = net.protocols.User_LoginReq()
-    login_req.user_uid = user_uid
-    login_req.user_name = user_name
-    login_req.seq = 1
-
-    req = net.protocols.to_json(user_uid=user_uid, message=login_req)
-    req += "\r\n\r\n"
-    print req
-
-    stream.write(req)
-
-    def on_received(data):
-        print data
-
-    stream.read_until_close(callback=lambda data: None, streaming_callback=on_received)
-
-
-def user_login(user_uid, user_name):
-    request_url = "%s/user?cmd=login&user_uid=%s&user_name=%s"\
-                   % (base_api_url, user_uid, user_name)
+    request_url = "%s/auth/access_token?user_uid=%s" % (SERVER_BASE_URL, user_uid)
     client = httpclient.HTTPClient()
     response = client.fetch(request=request_url,
                             connect_timeout=10.0,
@@ -106,61 +23,158 @@ def user_login(user_uid, user_name):
     client.close()
 
 
-def group_invite(group_uid, user_uid, invitee_uids):
+def do_login(argv):
+    access_token = argv[0]
+    name = argv[1]
+
+    request_url = "%s/user/login?access_token=%s&name=%s" % (SERVER_BASE_URL, access_token, name)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_message_send(argv):
+    access_token = argv[0]
+    recipient_uid = argv[1]
+    group_uid = argv[2]
+    message = argv[3]
+    secret = argv[4]
+
+    request_url = "%s/message/send?access_token=%s\
+                &recipient_uid=%s&group_uid=%s&message=%s&secret=%s"
+                % (SERVER_BASE_URL, access_token, recipient_uid, group_uid, message, secret)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_message_get(argv):
+    access_token = argv[0]
+    sender_uid = argv[1]
+    group_uid = argv[2]
+    since_uid = argv[3]
+    count = argv[4]
+
+    request_url = "%s/message/get?access_token=%s\
+                &sender_uid=%s&group_uid=%s&since_uid=%s&count=%s"
+                % (SERVER_BASE_URL, access_token, sender_uid, group_uid, since_uid, count)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_message_read(argv):
+    access_token = argv[0]
+    message_uids = argv[1]
+
+    request_url = "%s/message/read?access_token=%s&message_uids=%s"
+                % (SERVER_BASE_URL, access_token, message_uids)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_message_open(argv):
+    access_token = argv[0]
+    message_uid = argv[1]
+
+    request_url = "%s/message/open?access_token=%s&message_uid=%s"
+                % (SERVER_BASE_URL, access_token, message_uid)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_message_cancel(argv):
+    access_token = argv[0]
+    message_uid = argv[1]
+
+    request_url = "%s/message/cancel?access_token=%s&message_uid=%s"
+                % (SERVER_BASE_URL, access_token, message_uid)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_group_create(argv):
+    access_token = argv[0]
+    message_uid = argv[1]
+
+    request_url = "%s/group/create?access_token=%s&message_uid=%s"
+                % (SERVER_BASE_URL, access_token, message_uid)
+    client = httpclient.HTTPClient()
+    response = client.fetch(request=request_url,
+                            connect_timeout=10.0,
+                            request_timeout=10.0)
+    print response.body
+    client.close()
+
+
+def do_group_delete(argv):
     pass
 
 
-def group_join(group_uid, user_uid):
-    if group_uid is not None:
-        request_url = "%s/group?cmd=join&group_uid=%s&user_uid=%s"\
-                       % (base_api_url, group_uid, user_uid)
-    else:
-        request_url = "%s/group?cmd=join&user_uid=%s" \
-                      % (base_api_url, user_uid)
-
-    client = httpclient.HTTPClient()
-    response = client.fetch(request=request_url,
-                            connect_timeout=10.0,
-                            request_timeout=10.0)
-    print response.body
-    client.close()
+def do_group_invite(argv):
+    pass
 
 
-def group_leave(group_uid, user_uid):
-    request_url = "%s/group?cmd=leave&group_uid=%s&user_uid=%s" \
-                  % (base_api_url, group_uid, user_uid)
+def do_group_join(argv):
+    pass
 
-    client = httpclient.HTTPClient()
-    response = client.fetch(request=request_url,
-                            connect_timeout=10.0,
-                            request_timeout=10.0)
-    print response.body
-    client.close()
+
+def do_group_leave(argv):
+    pass
 
 
 def main():
-    if len(sys.argv) < 3:
-        print "client.py [User ID] [User Name] [Group ID]"
+    if len(sys.argv) < 2:
+        print "client.py [action]"
         return 1
 
-    user_uid = sys.argv[1]
-    user_name = sys.argv[2]
-    group_uid = None
-    if len(sys.argv) > 3:
-        group_uid = sys.argv[3]
+    action = sys.argv[1]
 
-    user_login(user_uid=user_uid, user_name=user_name)
-    group_join(group_uid=group_uid, user_uid=user_uid)
-
-    #client = WebSocketClient()
-    #client.connect(url=websocket_url)
-    #client.login(user_uid=user_uid, user_name=user_name)
-    #run_tcpsocket(user_uid=user_uid, user_name=user_name)
-    run_websocket(url=websocket_url, user_uid=user_uid, user_name=user_name)
-    #websocket_connect(url=websocket_url)
-    print "client started..."
-
-    ioloop.IOLoop.instance().start()
+    if action == "auth":
+        do_auth(sys.argv[2:])
+    elif action == "login":
+        do_login(sys.argv[2:])
+    elif action == "message.get":
+        do_message_get(sys.argv[2:])
+    elif action == "message.send":
+        do_message_send(sys.argv[2:])
+    elif action == "message.read":
+        do_message_read(sys.argv[2:])
+    elif action == "message.open":
+        do_message_open(sys.argv[2:])
+    elif action == "message.cancel":
+        do_message_cancel(sys.argv[2:])
+    elif action == "group.create":
+        do_group_create(sys.argv[2:])
+    elif action == "group.delete":
+        do_group_delete(sys.argv[2:])
+    elif action == "group.invite":
+        do_group_invite(sys.argv[2:])
+    elif action == "group.join":
+        do_group_join(sys.argv[2:])
+    elif action == "group.leave":
+        do_group_leave(sys.argv[2:])
 
     return 0
 

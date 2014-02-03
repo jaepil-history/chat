@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 from mongoengine import Document
 from mongoengine import EmbeddedDocument
@@ -40,7 +40,8 @@ class User(Document):
         ],
         "roles": {
             "json": {
-                "_default": blacklist("id", "devices", "created_at", "last_login_at")
+                "_default": blacklist("id", "devices", "joined_groups",
+                    "created_at", "last_login_at")
             }
         }
     }

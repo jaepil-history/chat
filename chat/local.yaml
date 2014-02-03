@@ -54,7 +54,7 @@ database:
 
 # Session
 session:
-  timeout_minutes: 10
+  timeout_minutes: 60
 
 # Interop
 #interop:

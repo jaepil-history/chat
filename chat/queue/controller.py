@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import queue.models
 
@@ -18,8 +18,7 @@ def find(user_uids):
     result = queue.models.Queue.objects(user_uid__in=user_uids)
 
     queues = []
-    if result is not None:
-        for q in result:
-            queues.append(q)
+    for q in result:
+        queues.append(q)
 
     return queues

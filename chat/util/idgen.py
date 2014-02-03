@@ -1,7 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
-
-# Reference
-# http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import time
 
@@ -37,7 +34,7 @@ class IDGenerator(object):
 
     @classmethod
     def instance(cls, **kwargs):
-        if cls._instance is None:
+        if not cls._instance:
             cls._instance = cls(**kwargs)
 
         return cls._instance

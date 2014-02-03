@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
-import signal
 import sys
-import time
 
 import mongoengine
 
@@ -13,30 +11,10 @@ from tornado import ioloop
 from tornado import options
 from tornado import web
 
-import app.config
+from config.loader import load_appcfg
+from common import cache
 import interop.service
 from log import logger
-# from net.tcp import acceptor
-from util import cache
-
-
-def shutdown():
-    io_loop = ioloop.IOLoop.instance()
-
-    interop.service.stop()
-
-    io_loop.add_timeout(time.time() + 1, io_loop.stop)
-
-
-def sig_handler(sig, frame):
-    """Catch signal and init callback.
-
-    More information about signal processing for graceful stopping
-    Tornado server you can find here:
-    http://codemehanika.org/blog/2011-10-28-graceful-stop-tornado.html
-    """
-
-    ioloop.IOLoop.instance().add_callback(shutdown)
 
 
 class Application(web.Application):
@@ -44,13 +22,10 @@ class Application(web.Application):
 
 
 def build_url_handlers():
-    from message import urls as message_urls
+    from net.http import urls as http_urls
     from net.websocket import urls as ws_urls
-    from group import urls as group_urls
-    from user import urls as user_urls
 
-    handlers = message_urls.handlers + ws_urls.handlers\
-        + group_urls.handlers + user_urls.handlers
+    handlers = http_urls.handlers + ws_urls.handlers
 
     return handlers
 
@@ -88,9 +63,6 @@ def init_server(config, port):
     http_server = httpserver.HTTPServer(application)
     http_server.listen(port)
 
-    # tcp_server = acceptor.Acceptor()
-    # tcp_server.listen(port=config.port_tcp)
-
 
 def init_service(config):
     if config.interop:
@@ -115,7 +87,7 @@ def main():
         return False
 
     options.parse_command_line()
-    config = app.config.load_appcfg(sys.argv[1])
+    config = load_appcfg(sys.argv[1])
     task_id = 0
     if len(sys.argv) > 2:
         task_id = int(sys.argv[2])
@@ -140,9 +112,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # Init signals handler for TERM and INT signals
-    # (and so KeyboardInterrupt)
-    signal.signal(signal.SIGTERM, sig_handler)
-    signal.signal(signal.SIGINT, sig_handler)
-
     main()

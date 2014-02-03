@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Appspand, Inc.
+# Copyright (c) 2013-2014 Appspand, Inc.
 
 import errno
 import logging
@@ -99,12 +99,12 @@ class LogFormatter(logging.Formatter):
 
 
 def enable_pretty_logging(logger=None, options=None, task_id=0):
-    if options is None:
+    if not options:
         return
     if options["logging"] == "none":
         return
 
-    if logger is None:
+    if not logger:
         logger = logging.getLogger()
 
     logger.setLevel(getattr(logging, options["logging"].upper()))
@@ -118,7 +118,7 @@ def enable_pretty_logging(logger=None, options=None, task_id=0):
         logger.addHandler(channel)
 
     if (options["log_to_stderr"] or
-            (options["log_to_stderr"] is None and not logger.handlers)):
+            (not options["log_to_stderr"] and not logger.handlers)):
         channel = logging.StreamHandler()
         channel.setFormatter(LogFormatter(task_id=0, color=True))
         logger.addHandler(channel)
