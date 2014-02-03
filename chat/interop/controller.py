@@ -42,11 +42,12 @@ def push(sender_uid, group_uid, target_uids, message_info, queue_info):
             }
         }
         messages.append(jsonmessage.JSONMessage(body=body))
+        logger.access.debug("pushed to snek: %r" % body)
 
     for message in messages:
         SQS_QUEUE_TO_SNEK.write(message)
 
-    logger.access.debug("pushed to snek: %r" % messages)
+    # logger.access.debug("pushed to snek: %r" % messages)
 
 
 def push_old(sender_uid, group_uid, target_uids, message_info):
