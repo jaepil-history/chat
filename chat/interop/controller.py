@@ -34,7 +34,7 @@ def push(sender_uid, group_uid, target_uids, message_info, queue_info):
             "message_info": {
                 "message_uid": message_info.uid,
                 "sender_uid": message_info.sender_uid,
-                "group_uid": message_info.group_uid,
+                "group_uid": message_info.group_uid if message_info.group_uid else None,
                 "message": message_info.message,
                 "countdown": message_info.countdown,
                 "issued_at": timestamp.get_timestamp(message_info.issued_at),
