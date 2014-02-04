@@ -142,9 +142,9 @@ def open_secret_message(user_uid, message_uid):
     group_uid = message_info.group_uid
 
     # TODO: sender_uid/target_uid/group_uid
-    event.controller.on_message_open(sender_uid=sender_uid,
+    event.controller.on_message_open(sender_uid=user_uid,
                                      group_uid=group_uid,
-                                     target_uid=message_info.sender_uid,
+                                     target_uid=sender_uid,
                                      message_uid=message_uid)
 
     return message_info
