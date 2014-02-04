@@ -34,13 +34,13 @@ class QueuePoller(Thread):
             if items:
                 IOLoop.instance().add_callback(self.send_to_user, items)
 
-            while not self.send_queue.empty():
-                send_req = self.send_queue.get()
-                controller.push(sender_uid=send_req.sender_uid,
-                                group_uid=0,
-                                target_uids=[send_req.target_uid],
-                                message_info=message_info)
-                pass
+            # while not self.send_queue.empty():
+            #     send_req = self.send_queue.get()
+            #     controller.push(sender_uid=send_req.sender_uid,
+            #                     group_uid=0,
+            #                     target_uids=[send_req.target_uid],
+            #                     message_info=message_info)
+            #     pass
 
     def send_to_user(self, items):
         for item in items:
@@ -48,15 +48,19 @@ class QueuePoller(Thread):
             logger.access.debug("pull from snek: %r" % item_data)
 
             send_req = net.protocols.Message_SendReq(item_data)
+            message.controller.send(sender_uid=send_req.sender_uid,
+                                    recipient_uid=send_req.target_uid,
+                                    message=send_req.message,
+                                    is_group=send_req.is_group)
 
-            (online, offline) = LinkManager.instance().find(user_uids=send_req.target_uid)
-            if online:
-                message.controller.send(sender_uid=send_req.sender_uid,
-                                        recipient_uid=send_req.target_uid,
-                                        message=send_req.message,
-                                        is_group=send_req.is_group)
-            else:
-                self.send_queue.put(send_req)
+            # (online, offline) = LinkManager.instance().find(user_uids=send_req.target_uid)
+            # if online:
+            #     message.controller.send(sender_uid=send_req.sender_uid,
+            #                             recipient_uid=send_req.target_uid,
+            #                             message=send_req.message,
+            #                             is_group=send_req.is_group)
+            # else:
+            #     self.send_queue.put(send_req)
 
 
 _started = False
