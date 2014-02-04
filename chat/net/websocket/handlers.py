@@ -323,10 +323,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         try:
             message_info = message.controller.open_secret_message(
-                sender_uid=request.sender_uid,
-                recipient_uid=request.target_uid,
-                message_uid=request.message_uid,
-                is_group=request.is_group)
+                user_uid=user_uid,
+                message_uid=request.message_uid)
             if message_info is None:
                 error_code = 100
                 error_message = "Cannot open message"
