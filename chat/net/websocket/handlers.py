@@ -65,11 +65,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         if link is None:
             logger.access.debug("WebSocket(%d): link not found" % self.link_id)
 
-        message = message.encode("utf-8")
+        message_utf8 = message.encode("utf-8")
         logger.access.debug("WebSocket(%d): on message - %s"
-            % (self.link_id, message))
+            % (self.link_id, message_utf8))
 
-        msg = json.loads(message)
+        msg = json.loads(message_utf8)
         if "cmd" not in msg or "user_uid" not in msg or "payload" not in msg:
             raise AttributeError("Invalid command format")
 
