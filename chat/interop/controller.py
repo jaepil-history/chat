@@ -21,7 +21,7 @@ SQS_QUEUE_FROM_SNEK = SQS.get_queue(SQS_QUEUE_FROM_SNEK)
 
 def push(sender_uid, group_uid, target_uids, message_info, queue_info):
     if not group_uid:
-        group_uid = 0
+        group_uid = None
 
     messages = []
     for user_uid in target_uids:
