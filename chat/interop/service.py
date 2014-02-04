@@ -31,8 +31,9 @@ class QueuePoller(Thread):
         while not self.terminated:
             logger.access.debug("checking messages from snek queue...")
             items = controller.pull()
-            if items:
-                IOLoop.instance().add_callback(self.send_to_user, items)
+            # if items:
+            #     IOLoop.instance().add_callback(self.send_to_user, items)
+            self.send_to_user(items=items)
 
             # while not self.send_queue.empty():
             #     send_req = self.send_queue.get()
