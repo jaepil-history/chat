@@ -68,13 +68,13 @@ def init_service(config):
     if config.interop:
         interop.service.start()
 
-    if config.application.stage == "local":
-        return
+    # if config.application.stage == "local":
+    #     return
 
-    import newrelic.agent
-    newrelic.agent.initialize("../conf/newrelic.ini",
-                              config.application.stage)
-    newrelic.agent.register_application()
+    # import newrelic.agent
+    # newrelic.agent.initialize("../conf/newrelic.ini",
+    #                           config.application.stage)
+    # newrelic.agent.register_application()
 
 
 def run_server(config):
