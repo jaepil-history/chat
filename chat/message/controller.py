@@ -20,7 +20,11 @@ def _find_group(group_uid):
 
 
 def find_one(message_uid):
-    return models.Message.objects(uid=message_uid).first()
+    m = models.Message.objects(uid=message_uid).first()
+    if not m:
+        raise RuntimeError("Unknown message_uid.")
+
+    return m
 
 
 def find(message_uids):
