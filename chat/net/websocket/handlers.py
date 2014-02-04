@@ -143,9 +143,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         link.send(ans_json)
 
     def group_join(self, link, user_uid, request):
-        group_info = group.controller.join(group_uid=request.group_uid,
-                                           user_uid=request.user_uid,
-                                           invitee_uids=request.invitee_uids)
+        group_info = group.controller.invite(group_uid=request.group_uid,
+                                             user_uid=request.user_uid,
+                                             invitee_uids=request.invitee_uids)
         if group_info is not None:
             error_code = 0
             error_message = "OK"
