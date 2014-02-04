@@ -71,13 +71,15 @@ def find(group_uid):
 
 
 def invite(group_uid, user_uid, invitee_uids):
+    if not invitee_uids:
+        raise RuntimeError("Empty group member.")
+
+    group_info = None
     if not group_uid:
         # TODO: raise exception
-        return None
-
-    group_info = find(group_uid=group_uid)
-    if not group_info:
-        return None
+        group_info = create(owner_uid=user_uid, invitee_uids=invitee_uids)
+    else:
+        group_info = find(group_uid=group_uid)
 
     for uid in invitee_uids:
         if uid not in group_info.members:
@@ -94,8 +96,7 @@ def invite(group_uid, user_uid, invitee_uids):
 
 def join(group_uid, user_uid):
     if not group_uid:
-        # TODO: raise exception
-        return None
+        raise KeyError("Invalid group_uid.")
 
     group_info = find(group_uid=group_uid)
     if not group_info:
