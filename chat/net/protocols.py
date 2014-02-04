@@ -173,7 +173,7 @@ class MessageInfo(Message):
     def from_mongo_engine(self, document):
         self.uid = document.uid
         self.sender_uid = document.sender_uid
-        self.group_uid = document.group_uid
+        self.group_uid = document.group_uid if document.group_uid else None
         self.message = document.message
         self.countdown = document.countdown
         self.issued_at = timestamp.get_timestamp(document.issued_at)
@@ -185,7 +185,7 @@ class MessageInfo(Message):
     def to_mongo_engine(self, document):
         document.uid = self.uid
         document.sender_uid = self.sender_uid
-        document.group_uid = self.group_uid
+        document.group_uid = long(self.group_uid) if self.group_uid else 0
         document.message = self.message
         document.countdown = self.countdown
         document.issued_at = timestamp.get_datetime(self.issued_at)
