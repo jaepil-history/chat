@@ -39,8 +39,7 @@ def _load(group_uid):
         key = _make_group_key(group_uid=group_uid)
         json = redis.get(name=key)
         if not json:
-            # TODO: raise exception
-            pass
+            raise KeyError("Unknown group_uid.")
         group_info = models.Group.from_json(json)
     else:
         group_info = models.Group.objects(uid=group_uid).first()
