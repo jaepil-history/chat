@@ -302,6 +302,6 @@ class Message_ClearReq(Message):
 
 
 class Message_ClearAns(Message):
-    request = ModelType(Message_GetReq)
+    request = ModelType(Message_ClearReq)
     error_code = IntType(required=True)
     error_message = StringType(required=True)
