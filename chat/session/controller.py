@@ -10,6 +10,15 @@ from util import timestamp
 import models
 
 
+def _make_session_key(user_uid=None, access_token=None):
+    if user_uid:
+        return "session.id:{0}".format(user_uid)
+    elif access_token:
+        return "session.token:{0}".format(access_token)
+    else:
+        raise RuntimeError("")
+
+
 def create(user_uid):
     appcfg = get_appcfg()
     session_config = appcfg.session
@@ -39,11 +48,11 @@ def save(session):
         with redis.pipeline() as tr:
             session_json = session.to_json()
 
-            key = ("session.id:%s" % (session.user_uid))
+            key = _make_session_key(user_uid=session.user_uid)
             tr.set(name=key, value=session_json)
             tr.expireat(key, int(session.expires_at))
 
-            key = ("session.token:%s" % (session.access_token))
+            key = _make_session_key(access_token=session.access_token)
             tr.set(name=key, value=session_json)
             tr.expireat(key, int(session.expires_at))
 
@@ -61,8 +70,8 @@ def delete(session):
     if redis_config.enabled:
         redis = cache.get_connection()
         with redis.pipeline() as tr:
-            tr.delete("session.id:%s" % (session.user_uid))
-            tr.delete("session.token:%s" % (session.access_token))
+            tr.delete(_make_session_key(user_uid=session.user_uid))
+            tr.delete(_make_session_key(access_token=session.access_token))
 
             tr.execute()
     else:
@@ -79,9 +88,9 @@ def find(user_uid=None, access_token=None, extend_token=False, allow_expiration=
 
         session_json = None
         if user_uid:
-            session_json = redis.get("session.id:%s" % (user_uid))
+            session_json = redis.get(_make_session_key(user_uid=user_uid))
         elif access_token:
-            session_json = redis.get("session.token:%s" % (access_token))
+            session_json = redis.get(_make_session_key(access_token=access_token))
 
         if session_json:
             session = models.Session.from_json(session_json)

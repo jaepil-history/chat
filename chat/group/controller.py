@@ -12,12 +12,16 @@ import event.controller
 import models
 
 
+def _make_group_key(group_uid):
+    return "group.{0}".format(group_uid)
+
+
 def _save(group_info):
     config = get_appcfg()
 
     if config.database.redis.enabled:
         redis = cache.get_connection()
-        key = ("group.%s" % group_info.uid)
+        key = _make_group_key(group_uid=group_info.uid)
         json = group_info.to_json()
         redis.set(name=key, value=json)
     else:
@@ -32,7 +36,7 @@ def _load(group_uid):
     group_info = None
     if config.database.redis.enabled:
         redis = cache.get_connection()
-        key = ("group.%s" % group_uid)
+        key = _make_group_key(group_uid=group_uid)
         json = redis.get(name=key)
         if not json:
             # TODO: raise exception
