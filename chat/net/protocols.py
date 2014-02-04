@@ -48,7 +48,7 @@ def from_json(cls, raw_data):
         data = raw_data
 
     if "cmd" not in data or "user_uid" not in data or "payload" not in data:
-        return None
+        raise KeyError("Invalid message format.")
 
     return cls(data["payload"])
 
