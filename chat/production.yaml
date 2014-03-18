@@ -65,7 +65,7 @@ interop:
   sqs:
     access_key: AKIAIFHFM4CZA26UVV4A
     secret_key: 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
-    region: ap-southeast-1
+    region: ap-northeast-1
     path: /
     request_queue_name: MSG_FROM_SNEK_TO_APPSPAND
     fallback_queue_name: MSG_FROM_APPSPAND_TO_SNEK
