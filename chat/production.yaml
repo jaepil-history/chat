@@ -36,23 +36,24 @@ server:
     - host: chat.dev.appspand.com
     - host: chat.appspandapp.com
     - host: chat.dev.appspandapp.com
+    - host: chat.socialinvestments.co.kr
   base_port: 8400
 
 # Databases
 database:
   mongodb:
-    connection_uri: mongodb://127.0.0.1:27017/chat
+    connection_uri: mongodb://10.0.100.10:27017/chat
     connection_pool: 3
     timeout: 5000
 
   redis:
     enabled: true
-    connection_uri: redis://127.0.0.1:6379/1
+    connection_uri: redis://10.0.100.10:6379/1
     connection_pool: 3
     timeout: 5000
-    host: 127.0.0.1
+    host: 10.0.100.10
     port: 6379
-    password: !!str
+    password: "welcome2si"
     db: 1
 
 # Session
