@@ -9,7 +9,7 @@ from util import timestamp
 
 SQS = sqs.connect_to_region(aws_access_key_id="AKIAIFHFM4CZA26UVV4A",
                             aws_secret_access_key="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",
-                            region_name="ap-southeast-1",
+                            region_name="ap-northeast-1",
                             path="/")
 
 SQS_QUEUE_TO_SNEK = "MSG_FROM_APPSPAND_TO_SNEK"
